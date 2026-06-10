@@ -5,3 +5,18 @@
   font-family: "Outfit", sans-serif;
   font-optical-sizing: auto;
 }
+
+/* Safety-First Color Scheme */
+:root {
+  --color-primary: #06445b;
+  --color-secondary: #fbb12a;
+  --color-accent: #ff6b35;
+  --color-background: #ffffff;
+  --color-text: #0a0a0a;
+  --color-border: #06445b;
+}
+
+body {
+  background-color: var(--color-background);
+  color: var(--color-text);
+}
