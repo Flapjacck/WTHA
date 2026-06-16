@@ -3,6 +3,13 @@ import type { HoseDetailsFormProps, HoseCondition } from './types';
 
 const CONDITIONS: HoseCondition[] = ['Good', 'Fair', 'Poor', 'Unknown'];
 
+const CONDITION_HINTS: Record<HoseCondition, string> = {
+  Good: 'Usable, minimal wear',
+  Fair: 'Some wear, still functional',
+  Poor: 'Damaged or unsafe',
+  Unknown: 'Not sure yet',
+};
+
 export const HoseDetailsForm: React.FC<HoseDetailsFormProps> = ({
   condition,
   length,
@@ -37,71 +44,76 @@ export const HoseDetailsForm: React.FC<HoseDetailsFormProps> = ({
   };
 
   return (
-    <div className="w-full max-w-lg mx-auto">
-      <h3 className="text-lg font-semibold mb-4" style={{ color: '#06445b' }}>
-        Hose Details
-      </h3>
-
-      {/* Condition Dropdown */}
-      <div className="mb-4">
-        <label className="block text-base font-semibold mb-2" style={{ color: '#06445b' }}>
-          Condition
-        </label>
-        <select
-          value={condition}
-          onChange={handleConditionChange}
-          className="w-full px-4 py-3 text-base border-2 border-gray-300 rounded-lg focus:outline-none focus:border-yellow-400"
-        >
-          {CONDITIONS.map((cond) => (
-            <option key={cond} value={cond}>
-              {cond}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      {/* Length Input */}
-      <div className="mb-4">
-        <label className="block text-base font-semibold mb-2" style={{ color: '#06445b' }}>
-          Length (feet)
-        </label>
-        <input
-          type="number"
-          value={length}
-          onChange={handleLengthChange}
-          placeholder="e.g., 50"
-          className="w-full px-4 py-3 text-base border-2 border-gray-300 rounded-lg focus:outline-none focus:border-yellow-400"
-          min="0"
-          step="1"
-        />
-        {errors.length && <p className="text-sm mt-1" style={{ color: '#ff6b35' }}>{errors.length}</p>}
-      </div>
-
-      {/* Notes Textarea */}
-      <div className="mb-4">
-        <label className="block text-base font-semibold mb-2" style={{ color: '#06445b' }}>
-          Additional Notes (optional)
-        </label>
-        <textarea
-          value={notes}
-          onChange={handleNotesChange}
-          placeholder="e.g., Red handle, damaged at one end"
-          className="w-full px-4 py-3 text-base border-2 border-gray-300 rounded-lg focus:outline-none focus:border-yellow-400 resize-none"
-          rows={3}
-        />
-      </div>
-
-      {/* Summary */}
-      <div
-        className="p-4 rounded-lg"
-        style={{ backgroundColor: '#f0f8fb', borderLeft: '4px solid #fbb12a' }}
-      >
-        <p className="text-sm font-semibold mb-1">Summary:</p>
-        <p className="text-sm text-gray-700">
-          {length > 0 ? `${length} ft, ` : 'No length specified, '} 
-          {condition} condition
-          {notes && `, ${notes.substring(0, 50)}...`}
+    <div className="w-full">
+      <div className="mb-6">
+        <h3 className="text-lg font-bold mb-1" style={{ color: 'var(--color-primary)' }}>
+          Hose details
+        </h3>
+        <p className="text-sm" style={{ color: 'var(--color-text-muted)' }}>
+          Tell us about the hose's condition and size.
         </p>
+      </div>
+
+      <div className="space-y-5">
+        <div>
+          <label className="form-label" htmlFor="hose-condition">
+            Condition
+          </label>
+          <select
+            id="hose-condition"
+            value={condition}
+            onChange={handleConditionChange}
+            className="form-input"
+          >
+            {CONDITIONS.map((cond) => (
+              <option key={cond} value={cond}>
+                {cond} — {CONDITION_HINTS[cond]}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div>
+          <label className="form-label" htmlFor="hose-length">
+            Length (feet)
+          </label>
+          <input
+            id="hose-length"
+            type="number"
+            value={length || ''}
+            onChange={handleLengthChange}
+            placeholder="e.g. 50"
+            className={`form-input${errors.length ? ' form-input--error' : ''}`}
+            min="0"
+            step="1"
+          />
+          {errors.length && (
+            <p className="text-sm mt-1.5" style={{ color: 'var(--color-accent)' }}>{errors.length}</p>
+          )}
+        </div>
+
+        <div>
+          <label className="form-label" htmlFor="hose-notes">
+            Additional notes <span className="font-normal" style={{ color: 'var(--color-text-muted)' }}>(optional)</span>
+          </label>
+          <textarea
+            id="hose-notes"
+            value={notes}
+            onChange={handleNotesChange}
+            placeholder="e.g. Red handle, damaged at one end"
+            className="form-input resize-none"
+            rows={3}
+          />
+        </div>
+
+        <div className="info-box">
+          <strong>Summary</strong>
+          <p className="mt-0.5">
+            {length > 0 ? `${length} ft · ` : 'Length not specified · '}
+            {condition} condition
+            {notes && ` · ${notes.length > 60 ? notes.substring(0, 60) + '…' : notes}`}
+          </p>
+        </div>
       </div>
     </div>
   );

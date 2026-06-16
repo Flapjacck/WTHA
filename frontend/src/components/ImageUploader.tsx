@@ -5,7 +5,7 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
   images,
   onImagesChange,
   maxImages = 5,
-  maxFileSize = 10 * 1024 * 1024, // 10MB default
+  maxFileSize = 10 * 1024 * 1024,
   onError,
 }) => {
   const [isDragging, setIsDragging] = useState(false);
@@ -35,7 +35,6 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
         return;
       }
 
-      // Create preview URL
       const reader = new FileReader();
       reader.onload = (e) => {
         if (e.target?.result) {
@@ -76,28 +75,48 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
   };
 
   return (
-    <div className="w-full max-w-lg mx-auto">
-      <label className="block text-lg font-semibold mb-3" style={{ color: '#06445b' }}>
-        Upload Photos of Hose
-      </label>
-      <p className="text-sm text-gray-600 mb-4">
-        {images.length} / {maxImages} images uploaded
-      </p>
+    <div className="w-full">
+      <div className="mb-6">
+        <h3 className="text-lg font-bold mb-1" style={{ color: 'var(--color-primary)' }}>
+          Add photos
+        </h3>
+        <p className="text-sm" style={{ color: 'var(--color-text-muted)' }}>
+          Upload up to {maxImages} photos of the hose. {images.length} of {maxImages} added.
+        </p>
+      </div>
 
-      {/* Drag and Drop Area */}
       <div
+        role="button"
+        tabIndex={0}
         onDragEnter={handleDragEnter}
         onDragLeave={handleDragLeave}
+        onDragOver={(e) => e.preventDefault()}
         onDrop={handleDrop}
-        className="border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition mb-4"
-        style={{
-          borderColor: isDragging ? '#fbb12a' : '#ccc',
-          backgroundColor: isDragging ? '#fef3c7' : '#f9fafb',
-        }}
         onClick={() => fileInputRef.current?.click()}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            fileInputRef.current?.click();
+          }
+        }}
+        className={`drop-zone mb-4${isDragging ? ' drop-zone--active' : ''}`}
       >
-        <p className="text-lg font-semibold mb-2">📸 Drag images here</p>
-        <p className="text-sm text-gray-600">or click to browse</p>
+        <div
+          className="inline-flex items-center justify-center w-12 h-12 rounded-full mb-3"
+          style={{ background: 'var(--color-primary-muted)' }}
+        >
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--color-primary)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="2" />
+            <circle cx="8.5" cy="8.5" r="1.5" />
+            <path d="M21 15l-5-5L5 21" />
+          </svg>
+        </div>
+        <p className="font-semibold mb-1" style={{ color: 'var(--color-primary)' }}>
+          Drag photos here
+        </p>
+        <p className="text-sm" style={{ color: 'var(--color-text-muted)' }}>
+          or click to browse your device
+        </p>
       </div>
 
       <input
@@ -109,23 +128,31 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
         className="hidden"
       />
 
-      {error && <p className="text-sm mb-4" style={{ color: '#ff6b35' }}>{error}</p>}
+      {error && (
+        <p className="text-sm mb-4" style={{ color: 'var(--color-accent)' }}>{error}</p>
+      )}
 
-      {/* Image Previews */}
       {images.length > 0 && (
         <div className="grid grid-cols-3 gap-3">
           {images.map((image: string, index: number) => (
-            <div key={index} className="relative">
+            <div key={index} className="relative group">
               <img
                 src={image}
                 alt={`Preview ${index + 1}`}
-                className="w-full h-24 object-cover rounded-lg"
+                className="w-full aspect-square object-cover rounded-lg"
+                style={{ boxShadow: 'var(--shadow-sm)' }}
               />
               <button
-                onClick={() => handleRemoveImage(index)}
-                className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold hover:bg-red-600"
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleRemoveImage(index);
+                }}
+                className="absolute top-1.5 right-1.5 w-7 h-7 flex items-center justify-center rounded-full text-white text-sm font-bold opacity-0 group-hover:opacity-100 transition-opacity"
+                style={{ background: 'rgba(0,0,0,0.6)' }}
+                aria-label={`Remove photo ${index + 1}`}
               >
-                ✕
+                ×
               </button>
             </div>
           ))}

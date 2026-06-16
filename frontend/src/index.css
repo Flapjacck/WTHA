@@ -1,22 +1,289 @@
 @import "tailwindcss";
 
-/* Outfit font as primary */
 * {
   font-family: "Outfit", sans-serif;
   font-optical-sizing: auto;
 }
 
-/* Safety-First Color Scheme */
 :root {
   --color-primary: #06445b;
+  --color-primary-light: #0a5a75;
+  --color-primary-muted: #e8f2f6;
   --color-secondary: #fbb12a;
+  --color-secondary-light: #fef3c7;
   --color-accent: #ff6b35;
-  --color-background: #ffffff;
-  --color-text: #0a0a0a;
-  --color-border: #06445b;
+  --color-success: #059669;
+  --color-background: #f4f7f9;
+  --color-surface: #ffffff;
+  --color-text: #0f172a;
+  --color-text-muted: #64748b;
+  --color-border: #e2e8f0;
+  --color-border-focus: #fbb12a;
+  --shadow-sm: 0 1px 2px rgba(6, 68, 91, 0.06);
+  --shadow-md: 0 4px 24px rgba(6, 68, 91, 0.08);
+  --shadow-lg: 0 12px 40px rgba(6, 68, 91, 0.12);
+  --radius-sm: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
 }
 
 body {
   background-color: var(--color-background);
   color: var(--color-text);
+}
+
+.page-bg {
+  background-color: var(--color-background);
+  background-image:
+    radial-gradient(circle at 20% 10%, rgba(6, 68, 91, 0.04) 0%, transparent 50%),
+    radial-gradient(circle at 80% 90%, rgba(251, 177, 42, 0.06) 0%, transparent 50%);
+}
+
+.form-card {
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+}
+
+.form-card-header {
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-light) 100%);
+  padding: 1.5rem 2rem;
+  color: white;
+}
+
+.form-label {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: var(--color-primary);
+  margin-bottom: 0.5rem;
+}
+
+.form-input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  font-size: 1rem;
+  color: var(--color-text);
+  background: var(--color-surface);
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-md);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.form-input:hover {
+  border-color: #cbd5e1;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: var(--color-border-focus);
+  box-shadow: 0 0 0 3px rgba(251, 177, 42, 0.25);
+}
+
+.form-input--error {
+  border-color: var(--color-accent);
+}
+
+.form-input--error:focus {
+  box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.2);
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  border-radius: var(--radius-md);
+  transition: all 0.15s ease;
+  cursor: pointer;
+  border: none;
+}
+
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background: var(--color-secondary);
+  color: var(--color-primary);
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: #f5a623;
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+}
+
+.btn-secondary {
+  background: var(--color-primary);
+  color: white;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: var(--color-primary-light);
+}
+
+.btn-outline {
+  background: transparent;
+  color: var(--color-primary);
+  border: 1.5px solid var(--color-border);
+}
+
+.btn-outline:hover:not(:disabled) {
+  border-color: var(--color-primary);
+  background: var(--color-primary-muted);
+}
+
+.btn-success {
+  background: var(--color-success);
+  color: white;
+}
+
+.btn-success:hover:not(:disabled) {
+  background: #047857;
+  transform: translateY(-1px);
+}
+
+.btn-icon {
+  padding: 0.75rem;
+  min-width: 3rem;
+}
+
+.stepper {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  position: relative;
+  padding: 0 0.5rem;
+}
+
+.stepper::before {
+  content: "";
+  position: absolute;
+  top: 1rem;
+  left: 2.5rem;
+  right: 2.5rem;
+  height: 2px;
+  background: var(--color-border);
+  z-index: 0;
+}
+
+.step-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+  position: relative;
+  z-index: 1;
+}
+
+.step-circle {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  background: var(--color-surface);
+  border: 2px solid var(--color-border);
+  color: var(--color-text-muted);
+  transition: all 0.2s ease;
+}
+
+.step-item--active .step-circle {
+  background: var(--color-secondary);
+  border-color: var(--color-secondary);
+  color: var(--color-primary);
+  box-shadow: 0 0 0 4px rgba(251, 177, 42, 0.25);
+}
+
+.step-item--done .step-circle {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: white;
+}
+
+.step-label {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-text-muted);
+  text-align: center;
+}
+
+.step-item--active .step-label,
+.step-item--done .step-label {
+  color: var(--color-primary);
+}
+
+.drop-zone {
+  border: 2px dashed var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: 2.5rem 1.5rem;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  background: #fafbfc;
+}
+
+.drop-zone:hover {
+  border-color: var(--color-secondary);
+  background: var(--color-secondary-light);
+}
+
+.drop-zone--active {
+  border-color: var(--color-secondary);
+  background: var(--color-secondary-light);
+  transform: scale(1.01);
+}
+
+.review-card {
+  padding: 1rem 1.25rem;
+  background: var(--color-primary-muted);
+  border-radius: var(--radius-md);
+  border-left: 3px solid var(--color-primary);
+}
+
+.alert {
+  padding: 0.875rem 1rem;
+  border-radius: var(--radius-md);
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.alert-error {
+  background: #fef2f2;
+  color: #b91c1c;
+  border: 1px solid #fecaca;
+}
+
+.alert-success {
+  background: #ecfdf5;
+  color: #047857;
+  border: 1px solid #a7f3d0;
+}
+
+.info-box {
+  padding: 1rem 1.25rem;
+  background: var(--color-primary-muted);
+  border-radius: var(--radius-md);
+  border-left: 3px solid var(--color-secondary);
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+}
+
+.info-box strong {
+  color: var(--color-primary);
+  font-weight: 600;
 }
