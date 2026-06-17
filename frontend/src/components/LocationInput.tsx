@@ -5,7 +5,6 @@ import { MapDisplay } from './MapDisplay';
 export const LocationInput: React.FC<LocationInputProps> = ({
   value,
   onChange,
-  onError,
   placeholder = 'Enter address or site name (optional)',
 }) => {
   const [address, setAddress] = useState(value?.address || '');
