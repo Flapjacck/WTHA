@@ -3,6 +3,7 @@ import type { Location, HoseCondition, HoseSubmissionFormProps } from './types';
 import { LocationInput } from './LocationInput';
 import { ImageUploader } from './ImageUploader';
 import { HoseDetailsForm } from './HoseDetailsForm';
+import { StaticMapPreview } from './MapDisplay';
 
 const STEPS = [
   { id: 'location' as const, label: 'Location' },
@@ -33,14 +34,13 @@ export const HoseSubmissionForm: React.FC<HoseSubmissionFormProps> = ({
     setError(null);
 
     if (step === 'location' && !location) {
-      const err = 'Please provide a location';
-      setError(err);
-      onError?.(err);
+      // Don't show form-level error - let LocationInput show its own
+      // The LocationInput component handles showing appropriate guidance
       return;
     }
 
     if (step === 'images' && images.length === 0) {
-      const err = 'Please upload at least one image';
+      const err = 'Please upload at least one photo of the hose';
       setError(err);
       onError?.(err);
       return;
@@ -84,8 +84,7 @@ export const HoseSubmissionForm: React.FC<HoseSubmissionFormProps> = ({
   return (
     <div className="w-full">
       <div className="form-card-header">
-        <h2 className="text-xl sm:text-2xl font-bold">Report Lost Hose</h2>
-        <p className="mt-1 text-sm opacity-80">
+        <p className="text-sm opacity-80">
           Step {currentStepIndex + 1} of {STEPS.length} — {STEPS[currentStepIndex].label}
         </p>
       </div>
@@ -147,24 +146,29 @@ export const HoseSubmissionForm: React.FC<HoseSubmissionFormProps> = ({
             />
           )}
 
-          {step === 'review' && (
-            <div className="space-y-5">
-              <div>
-                <h3 className="text-lg font-bold mb-1" style={{ color: 'var(--color-primary)' }}>
-                  Review your report
-                </h3>
-                <p className="text-sm" style={{ color: 'var(--color-text-muted)' }}>
-                  Check everything looks right before submitting.
-                </p>
-              </div>
+{step === 'review' && (
+          <div className="space-y-5">
+            <div>
+              <h3 className="text-lg font-bold mb-1" style={{ color: 'var(--color-primary)' }}>
+                Review your report
+              </h3>
+              <p className="text-sm" style={{ color: 'var(--color-text-muted)' }}>
+                Check everything looks right before submitting.
+              </p>
+            </div>
 
-              <div className="space-y-3">
-                <div className="review-card">
-                  <p className="text-xs font-semibold uppercase tracking-wide mb-1" style={{ color: 'var(--color-primary)' }}>
-                    Location
-                  </p>
-                  <p className="text-sm" style={{ color: 'var(--color-text)' }}>{location?.address}</p>
-                </div>
+            <div className="space-y-4">
+              <div className="review-card">
+                <p className="text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: 'var(--color-primary)' }}>
+                  Location
+                </p>
+                <p className="text-sm mb-2" style={{ color: 'var(--color-text)' }}>{location?.address}</p>
+                {location && (
+                  <div className="mt-3">
+                    <StaticMapPreview location={location} />
+                  </div>
+                )}
+              </div>
 
                 <div className="review-card">
                   <p className="text-xs font-semibold uppercase tracking-wide mb-1" style={{ color: 'var(--color-primary)' }}>
@@ -214,8 +218,12 @@ export const HoseSubmissionForm: React.FC<HoseSubmissionFormProps> = ({
           )}
         </div>
 
+        {/* Form-level error display - component-level errors are shown in their respective components */}
         {error && (
-          <div className="alert alert-error mt-4">{error}</div>
+          <div className="alert alert-error mt-4">
+            <p className="font-semibold">Please check your entry</p>
+            <p className="mt-0.5 opacity-90">{error}</p>
+          </div>
         )}
       </div>
 
