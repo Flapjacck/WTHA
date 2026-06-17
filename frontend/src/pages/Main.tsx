@@ -55,12 +55,6 @@ export const Main: React.FC = () => {
     <div className="page-bg min-h-screen py-8 px-4 sm:py-12">
       <div className="max-w-xl mx-auto">
         <header className="text-center mb-8 sm:mb-10">
-          <div
-            className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider mb-4"
-            style={{ background: 'var(--color-primary-muted)', color: 'var(--color-primary)' }}
-          >
-            Field Report
-          </div>
           <h1
             className="text-4xl sm:text-5xl font-black tracking-tight leading-tight"
             style={{ color: 'var(--color-primary)' }}
@@ -68,7 +62,7 @@ export const Main: React.FC = () => {
             Where The Hose At?
           </h1>
           <p className="mt-3 text-base sm:text-lg max-w-md mx-auto" style={{ color: 'var(--color-text-muted)' }}>
-            Spot a lost hose on site? Report it in a few quick steps.
+            Report your hose when you&apos;re done — nobody likes chasing loose hose.
           </p>
         </header>
 
