@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import type { HoseDetailsFormProps, HoseCondition } from './types';
 
 const CONDITIONS: HoseCondition[] = ['Good', 'Fair', 'Poor', 'Unknown'];
@@ -17,26 +16,20 @@ export const HoseDetailsForm: React.FC<HoseDetailsFormProps> = ({
   onChange,
   onError,
 }) => {
-  const [errors, setErrors] = useState<{ [key: string]: string }>({});
-
   const handleConditionChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const newCondition = e.target.value as HoseCondition;
     onChange({ condition: newCondition, length, notes });
-    setErrors({ ...errors, condition: '' });
   };
 
   const handleLengthChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = parseFloat(e.target.value) || 0;
 
     if (value < 0) {
-      const err = 'Length must be positive';
-      setErrors({ ...errors, length: err });
-      onError?.(err);
+      onError?.('Length must be positive');
       return;
     }
 
     onChange({ condition, length: value, notes });
-    setErrors({ ...errors, length: '' });
   };
 
   const handleNotesChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -83,13 +76,10 @@ export const HoseDetailsForm: React.FC<HoseDetailsFormProps> = ({
             value={length || ''}
             onChange={handleLengthChange}
             placeholder="e.g. 50"
-            className={`form-input${errors.length ? ' form-input--error' : ''}`}
+            className="form-input"
             min="0"
             step="1"
           />
-          {errors.length && (
-            <p className="text-sm mt-1.5" style={{ color: 'var(--color-accent)' }}>{errors.length}</p>
-          )}
         </div>
 
         <div>

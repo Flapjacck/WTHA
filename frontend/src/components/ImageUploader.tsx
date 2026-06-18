@@ -1,57 +1,52 @@
 import { useState, useRef } from 'react';
-import type { ImageUploaderProps } from './types';
+import type { ImageUploaderProps, PendingImage } from './types';
+import { compressImageToMaxSize, readFileAsDataUrl } from '../lib/compressImage';
+import { MAX_FILE_SIZE } from '../lib/submissions';
 
 export const ImageUploader: React.FC<ImageUploaderProps> = ({
   images,
   onImagesChange,
-  maxImages = 5,
-  maxFileSize = 10 * 1024 * 1024,
+  maxImages = 2,
   onError,
 }) => {
   const [isDragging, setIsDragging] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleFileSelect = (files: FileList | null) => {
-    if (!files) return;
+  const handleFileSelect = async (files: FileList | null) => {
+    if (!files || isProcessing) return;
 
-    setError(null);
-    const newImages: string[] = [];
+    const remaining = maxImages - images.length;
+    if (remaining <= 0) {
+      onError?.(`Maximum ${maxImages} photos allowed`);
+      return;
+    }
 
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i];
+    const fileArray = Array.from(files).slice(0, remaining);
+    setIsProcessing(true);
 
-      if (!file.type.startsWith('image/')) {
-        const err = `${file.name} is not an image`;
-        setError(err);
-        onError?.(err);
-        return;
-      }
+    try {
+      const newImages: PendingImage[] = [];
 
-      if (file.size > maxFileSize) {
-        const err = `${file.name} is too large (max ${(maxFileSize / 1024 / 1024).toFixed(1)}MB)`;
-        setError(err);
-        onError?.(err);
-        return;
-      }
-
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        if (e.target?.result) {
-          newImages.push(e.target.result as string);
-          if (newImages.length === Object.keys(files).length) {
-            const combined = [...images, ...newImages];
-            if (combined.length > maxImages) {
-              const err = `Too many images (max ${maxImages})`;
-              setError(err);
-              onError?.(err);
-              return;
-            }
-            onImagesChange(combined);
-          }
+      for (const file of fileArray) {
+        if (!file.type.startsWith('image/')) {
+          onError?.(`${file.name} is not an image`);
+          return;
         }
-      };
-      reader.readAsDataURL(file);
+
+        const compressed = await compressImageToMaxSize(file, MAX_FILE_SIZE);
+        const previewUrl = await readFileAsDataUrl(compressed);
+        newImages.push({ file: compressed, previewUrl });
+      }
+
+      onImagesChange([...images, ...newImages]);
+    } catch (err) {
+      onError?.(err instanceof Error ? err.message : 'Failed to process image');
+    } finally {
+      setIsProcessing(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
     }
   };
 
@@ -78,10 +73,14 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
     <div className="w-full">
       <div className="mb-6">
         <h3 className="text-lg font-bold mb-1" style={{ color: 'var(--color-primary)' }}>
-          Add photos
+          Add photos{' '}
+          <span className="font-normal text-base" style={{ color: 'var(--color-text-muted)' }}>
+            (optional)
+          </span>
         </h3>
         <p className="text-sm" style={{ color: 'var(--color-text-muted)' }}>
-          Upload up to {maxImages} photos of the hose. {images.length} of {maxImages} added.
+          Upload up to {maxImages} photos (max 10MB each). Large photos are automatically resized.{' '}
+          {images.length} of {maxImages} added. You can skip this step if you have no photos.
         </p>
       </div>
 
@@ -92,14 +91,14 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
         onDragLeave={handleDragLeave}
         onDragOver={(e) => e.preventDefault()}
         onDrop={handleDrop}
-        onClick={() => fileInputRef.current?.click()}
+        onClick={() => !isProcessing && fileInputRef.current?.click()}
         onKeyDown={(e) => {
           if (e.key === 'Enter' || e.key === ' ') {
             e.preventDefault();
-            fileInputRef.current?.click();
+            if (!isProcessing) fileInputRef.current?.click();
           }
         }}
-        className={`drop-zone mb-4${isDragging ? ' drop-zone--active' : ''}`}
+        className={`drop-zone mb-4${isDragging ? ' drop-zone--active' : ''}${isProcessing ? ' opacity-60 pointer-events-none' : ''}`}
       >
         <div
           className="inline-flex items-center justify-center w-12 h-12 rounded-full mb-3"
@@ -112,10 +111,10 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
           </svg>
         </div>
         <p className="font-semibold mb-1" style={{ color: 'var(--color-primary)' }}>
-          Drag photos here
+          {isProcessing ? 'Processing photos…' : 'Drag photos here'}
         </p>
         <p className="text-sm" style={{ color: 'var(--color-text-muted)' }}>
-          or click to browse your device
+          {isProcessing ? 'Resizing if needed' : 'or click to browse your device'}
         </p>
       </div>
 
@@ -128,16 +127,12 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
         className="hidden"
       />
 
-      {error && (
-        <p className="text-sm mb-4" style={{ color: 'var(--color-accent)' }}>{error}</p>
-      )}
-
       {images.length > 0 && (
-        <div className="grid grid-cols-3 gap-3">
-          {images.map((image: string, index: number) => (
+        <div className="grid grid-cols-2 gap-3">
+          {images.map((item: PendingImage, index: number) => (
             <div key={index} className="relative group">
               <img
-                src={image}
+                src={item.previewUrl}
                 alt={`Preview ${index + 1}`}
                 className="w-full aspect-square object-cover rounded-lg"
                 style={{ boxShadow: 'var(--shadow-sm)' }}

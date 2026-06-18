@@ -1,7 +1,16 @@
-import type { HoseSubmissionData } from './types';
+import type { Location, HoseCondition } from './types';
+
+interface SuccessData {
+  id: string;
+  location: Location;
+  condition: HoseCondition;
+  length: number;
+  notes?: string;
+  submittedBy: string;
+}
 
 interface SuccessModalProps {
-  data: HoseSubmissionData;
+  data: SuccessData;
   onClose: () => void;
 }
 
@@ -43,6 +52,10 @@ export const SuccessModal: React.FC<SuccessModalProps> = ({ data, onClose }) => 
 
         <div className="info-box mb-6 space-y-3">
           <div className="flex justify-between gap-4">
+            <span className="font-semibold" style={{ color: 'var(--color-primary)' }}>ID</span>
+            <span className="font-mono text-xs break-all">{data.id}</span>
+          </div>
+          <div className="flex justify-between gap-4">
             <span className="font-semibold" style={{ color: 'var(--color-primary)' }}>Location</span>
             <span className="text-right">{data.location.address}</span>
           </div>
@@ -54,12 +67,6 @@ export const SuccessModal: React.FC<SuccessModalProps> = ({ data, onClose }) => 
             <span className="font-semibold" style={{ color: 'var(--color-primary)' }}>Length</span>
             <span>{data.length} ft</span>
           </div>
-          {data.images.length > 0 && (
-            <div className="flex justify-between gap-4">
-              <span className="font-semibold" style={{ color: 'var(--color-primary)' }}>Photos</span>
-              <span>{data.images.length} uploaded</span>
-            </div>
-          )}
           {data.notes && (
             <div className="flex justify-between gap-4">
               <span className="font-semibold shrink-0" style={{ color: 'var(--color-primary)' }}>Notes</span>

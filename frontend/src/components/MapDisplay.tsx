@@ -189,8 +189,9 @@ export const MapDisplay: React.FC<MapDisplayProps> = ({
 };
 
 // Static map preview for review step (non-interactive)
-export const StaticMapPreview: React.FC<{ location: Location }> = ({
+export const StaticMapPreview: React.FC<{ location: Location; height?: string }> = ({
   location,
+  height = '200px',
 }) => {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
@@ -217,10 +218,13 @@ export const StaticMapPreview: React.FC<{ location: Location }> = ({
       maxZoom: 19,
     }).addTo(map);
 
-    // Add marker
     L.marker([location.lat, location.lng]).addTo(map);
 
     mapRef.current = map;
+
+    requestAnimationFrame(() => {
+      map.invalidateSize();
+    });
 
     return () => {
       map.remove();
@@ -231,9 +235,11 @@ export const StaticMapPreview: React.FC<{ location: Location }> = ({
   return (
     <div
       ref={mapContainerRef}
+      className="static-map-preview"
       style={{
-        height: '200px',
+        height,
         width: '100%',
+        maxWidth: '100%',
         borderRadius: 'var(--radius-md)',
         overflow: 'hidden',
       }}

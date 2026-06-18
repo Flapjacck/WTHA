@@ -6,6 +6,11 @@ export interface Location {
 
 export type HoseCondition = 'Good' | 'Fair' | 'Poor' | 'Unknown';
 
+export interface PendingImage {
+  file: File;
+  previewUrl: string;
+}
+
 export interface HoseSubmissionData {
   location: Location;
   images: string[];
@@ -13,26 +18,28 @@ export interface HoseSubmissionData {
   length: number;
   notes?: string;
   submittedBy?: string;
+  id?: string;
 }
 
 export interface HoseSubmissionFormProps {
-  onSubmit: (data: HoseSubmissionData) => void | Promise<void>;
+  onSubmit: (data: Omit<HoseSubmissionData, 'images'> & { images: PendingImage[] }) => void | Promise<void>;
   isLoading?: boolean;
   onError?: (error: string) => void;
+  onClearError?: () => void;
 }
 
 export interface LocationInputProps {
   value: Location | null;
   onChange: (location: Location) => void;
   onError?: (error: string) => void;
+  onGeocodingChange?: (isGeocoding: boolean) => void;
   placeholder?: string;
 }
 
 export interface ImageUploaderProps {
-  images: string[];
-  onImagesChange: (images: string[]) => void;
+  images: PendingImage[];
+  onImagesChange: (images: PendingImage[]) => void;
   maxImages?: number;
-  maxFileSize?: number;
   onError?: (error: string) => void;
 }
 

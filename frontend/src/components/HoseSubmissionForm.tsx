@@ -1,9 +1,10 @@
-import { useState } from 'react';
-import type { Location, HoseCondition, HoseSubmissionFormProps } from './types';
-import { LocationInput } from './LocationInput';
+import { useRef, useState } from 'react';
+import type { Location, HoseCondition, HoseSubmissionFormProps, PendingImage } from './types';
+import { LocationInput, type LocationInputRef } from './LocationInput';
 import { ImageUploader } from './ImageUploader';
 import { HoseDetailsForm } from './HoseDetailsForm';
 import { StaticMapPreview } from './MapDisplay';
+import { MAX_IMAGES } from '../lib/submissions';
 
 const STEPS = [
   { id: 'location' as const, label: 'Location' },
@@ -18,35 +19,42 @@ export const HoseSubmissionForm: React.FC<HoseSubmissionFormProps> = ({
   onSubmit,
   isLoading = false,
   onError,
+  onClearError,
 }) => {
   const [step, setStep] = useState<FormStep>('location');
   const [location, setLocation] = useState<Location | null>(null);
-  const [images, setImages] = useState<string[]>([]);
+  const [images, setImages] = useState<PendingImage[]>([]);
   const [condition, setCondition] = useState<HoseCondition>('Unknown');
   const [length, setLength] = useState(0);
   const [notes, setNotes] = useState('');
   const [submittedBy, setSubmittedBy] = useState('');
-  const [error, setError] = useState<string | null>(null);
+  const [isResolvingLocation, setIsResolvingLocation] = useState(false);
+  const locationRef = useRef<LocationInputRef>(null);
 
   const currentStepIndex = STEPS.findIndex((s) => s.id === step);
 
-  const handleNextStep = () => {
-    setError(null);
+  const reportError = (msg: string) => {
+    onError?.(msg);
+  };
 
-    if (step === 'location' && !location) {
-      // Don't show form-level error - let LocationInput show its own
-      // The LocationInput component handles showing appropriate guidance
-      return;
-    }
+  const handleNextStep = async () => {
+    if (step === 'location') {
+      setIsResolvingLocation(true);
+      const resolved = await locationRef.current?.resolveLocation();
+      setIsResolvingLocation(false);
 
-    if (step === 'images' && images.length === 0) {
-      const err = 'Please upload at least one photo of the hose';
-      setError(err);
-      onError?.(err);
-      return;
+      if (!resolved || !resolved.address.trim()) {
+        if (!resolved) {
+          reportError('Please enter an address or use Location Helper to set the hose location');
+        }
+        return;
+      }
+
+      setLocation(resolved);
     }
 
     if (currentStepIndex < STEPS.length - 1) {
+      onClearError?.();
       setStep(STEPS[currentStepIndex + 1].id);
     }
   };
@@ -58,10 +66,8 @@ export const HoseSubmissionForm: React.FC<HoseSubmissionFormProps> = ({
   };
 
   const handleSubmit = async () => {
-    if (!location || images.length === 0 || !submittedBy.trim()) {
-      const err = 'Please complete all required fields';
-      setError(err);
-      onError?.(err);
+    if (!location || !location.address.trim()) {
+      reportError('Location is required');
       return;
     }
 
@@ -72,12 +78,10 @@ export const HoseSubmissionForm: React.FC<HoseSubmissionFormProps> = ({
         condition,
         length,
         notes,
-        submittedBy,
+        submittedBy: submittedBy.trim() || undefined,
       });
     } catch (err) {
-      const errorMsg = err instanceof Error ? err.message : 'Submission failed';
-      setError(errorMsg);
-      onError?.(errorMsg);
+      reportError(err instanceof Error ? err.message : 'Submission failed');
     }
   };
 
@@ -117,9 +121,10 @@ export const HoseSubmissionForm: React.FC<HoseSubmissionFormProps> = ({
         <div className="min-h-[280px]">
           {step === 'location' && (
             <LocationInput
+              ref={locationRef}
               value={location}
               onChange={setLocation}
-              onError={setError}
+              onError={reportError}
             />
           )}
 
@@ -127,8 +132,8 @@ export const HoseSubmissionForm: React.FC<HoseSubmissionFormProps> = ({
             <ImageUploader
               images={images}
               onImagesChange={setImages}
-              maxImages={5}
-              onError={setError}
+              maxImages={MAX_IMAGES}
+              onError={reportError}
             />
           )}
 
@@ -142,45 +147,49 @@ export const HoseSubmissionForm: React.FC<HoseSubmissionFormProps> = ({
                 setLength(l);
                 setNotes(n);
               }}
-              onError={setError}
+              onError={reportError}
             />
           )}
 
-{step === 'review' && (
-          <div className="space-y-5">
-            <div>
-              <h3 className="text-lg font-bold mb-1" style={{ color: 'var(--color-primary)' }}>
-                Review your report
-              </h3>
-              <p className="text-sm" style={{ color: 'var(--color-text-muted)' }}>
-                Check everything looks right before submitting.
-              </p>
-            </div>
-
-            <div className="space-y-4">
-              <div className="review-card">
-                <p className="text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: 'var(--color-primary)' }}>
-                  Location
+          {step === 'review' && (
+            <div className="space-y-5">
+              <div>
+                <h3 className="text-lg font-bold mb-1" style={{ color: 'var(--color-primary)' }}>
+                  Review your report
+                </h3>
+                <p className="text-sm" style={{ color: 'var(--color-text-muted)' }}>
+                  Check everything looks right before submitting.
                 </p>
-                <p className="text-sm mb-2" style={{ color: 'var(--color-text)' }}>{location?.address}</p>
-                {location && (
-                  <div className="mt-3">
-                    <StaticMapPreview location={location} />
-                  </div>
-                )}
               </div>
+
+              <div className="space-y-4">
+                <div className="review-card">
+                  <p className="text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: 'var(--color-primary)' }}>
+                    Location
+                  </p>
+                  <p className="text-sm mb-2" style={{ color: 'var(--color-text)' }}>{location?.address}</p>
+                  {location && (
+                    <div className="mt-3">
+                      <StaticMapPreview location={location} />
+                    </div>
+                  )}
+                </div>
 
                 <div className="review-card">
                   <p className="text-xs font-semibold uppercase tracking-wide mb-1" style={{ color: 'var(--color-primary)' }}>
                     Photos
                   </p>
-                  <p className="text-sm" style={{ color: 'var(--color-text)' }}>{images.length} photo{images.length !== 1 ? 's' : ''} attached</p>
+                  <p className="text-sm" style={{ color: 'var(--color-text)' }}>
+                    {images.length === 0
+                      ? 'No photos attached'
+                      : `${images.length} photo${images.length !== 1 ? 's' : ''} attached`}
+                  </p>
                   {images.length > 0 && (
                     <div className="flex gap-2 mt-3 overflow-x-auto pb-1">
-                      {images.map((img, i) => (
+                      {images.map((item: PendingImage, i: number) => (
                         <img
                           key={i}
-                          src={img}
+                          src={item.previewUrl}
                           alt={`Preview ${i + 1}`}
                           className="w-16 h-16 object-cover rounded-md shrink-0"
                           style={{ border: '2px solid white', boxShadow: 'var(--shadow-sm)' }}
@@ -202,7 +211,8 @@ export const HoseSubmissionForm: React.FC<HoseSubmissionFormProps> = ({
 
                 <div>
                   <label className="form-label" htmlFor="submitted-by">
-                    Your name or site ID <span style={{ color: 'var(--color-accent)' }}>*</span>
+                    Your name or site ID{' '}
+                    <span className="font-normal" style={{ color: 'var(--color-text-muted)' }}>(optional)</span>
                   </label>
                   <input
                     id="submitted-by"
@@ -217,14 +227,6 @@ export const HoseSubmissionForm: React.FC<HoseSubmissionFormProps> = ({
             </div>
           )}
         </div>
-
-        {/* Form-level error display - component-level errors are shown in their respective components */}
-        {error && (
-          <div className="alert alert-error mt-4">
-            <p className="font-semibold">Please check your entry</p>
-            <p className="mt-0.5 opacity-90">{error}</p>
-          </div>
-        )}
       </div>
 
       <div
@@ -244,7 +246,7 @@ export const HoseSubmissionForm: React.FC<HoseSubmissionFormProps> = ({
           <button
             type="button"
             onClick={handleSubmit}
-            disabled={isLoading || !submittedBy.trim()}
+            disabled={isLoading || isResolvingLocation}
             className="btn btn-success flex-1"
           >
             {isLoading ? 'Submitting…' : 'Submit report'}
@@ -252,11 +254,11 @@ export const HoseSubmissionForm: React.FC<HoseSubmissionFormProps> = ({
         ) : (
           <button
             type="button"
-            onClick={handleNextStep}
-            disabled={isLoading}
+            onClick={() => void handleNextStep()}
+            disabled={isLoading || isResolvingLocation}
             className="btn btn-primary flex-1"
           >
-            Continue
+            {isResolvingLocation ? 'Checking location…' : 'Continue'}
           </button>
         )}
       </div>

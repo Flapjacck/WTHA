@@ -1,36 +1,57 @@
 import { useState } from 'react';
-import type { HoseSubmissionData } from '../components/types';
+import type { HoseSubmissionData, PendingImage } from '../components/types';
 import { HoseSubmissionForm } from '../components/HoseSubmissionForm';
 import { SuccessModal } from '../components/SuccessModal';
+import { submitHoseReport } from '../lib/submissions';
+
+interface SuccessData {
+  id: string;
+  location: HoseSubmissionData['location'];
+  condition: HoseSubmissionData['condition'];
+  length: number;
+  notes?: string;
+  submittedBy: string;
+}
 
 export const Main: React.FC = () => {
-  const [successData, setSuccessData] = useState<HoseSubmissionData | null>(null);
+  const [successData, setSuccessData] = useState<SuccessData | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleFormSubmit = async (data: HoseSubmissionData) => {
+  const handleFormSubmit = async (
+    data: Omit<HoseSubmissionData, 'images'> & { images: PendingImage[] }
+  ) => {
     try {
       setIsSubmitting(true);
       setError(null);
 
-      console.log('Form submitted:', data);
+      const { images, ...submission } = data;
 
-      const submission = {
-        ...data,
-        id: `hose_${Date.now()}`,
-        submittedAt: new Date().toISOString(),
-        submittedBy: data.submittedBy || 'Anonymous',
-      };
+      if (!submission.location?.address.trim()) {
+        throw new Error('Location is required');
+      }
 
-      const existingSubmissions = JSON.parse(
-        localStorage.getItem('hoseSubmissions') || '[]'
+      const result = await submitHoseReport(
+        {
+          location: submission.location,
+          images: [],
+          condition: submission.condition,
+          length: submission.length,
+          notes: submission.notes,
+          submittedBy: submission.submittedBy,
+        },
+        images
       );
-      localStorage.setItem(
-        'hoseSubmissions',
-        JSON.stringify([...existingSubmissions, submission])
-      );
 
-      setSuccessData(data);
+      setSuccessData({
+        id: result.id,
+        location: result.location,
+        condition: result.condition,
+        length: result.length,
+        notes: result.notes,
+        submittedBy: result.submittedBy,
+      });
+
       await new Promise((resolve) => setTimeout(resolve, 500));
     } catch (err) {
       const errorMessage =
@@ -48,7 +69,6 @@ export const Main: React.FC = () => {
 
   const handleError = (errorMsg: string) => {
     setError(errorMsg);
-    setTimeout(() => setError(null), 5000);
   };
 
   return (
@@ -79,6 +99,7 @@ export const Main: React.FC = () => {
             onSubmit={handleFormSubmit}
             isLoading={isSubmitting}
             onError={handleError}
+            onClearError={() => setError(null)}
           />
         </div>
       </div>
